@@ -103,7 +103,7 @@
             clear_rectangle(ctx, canvas_xmin, canvas_ymin, canvas_xmax, canvas_ymax);
             draw_rectangle(ctx, canvas_plot_margin - point_radius, canvas_plot_margin - point_radius, 
                             canvas_xmax - canvas_plot_margin + point_radius, 
-                            canvas_xmax - canvas_plot_margin + point_radius);
+                            canvas_ymax - canvas_plot_margin + point_radius);
             draw_big_text(ctx, canvas_xmax/2, canvas_plot_margin/2, main_title);
             draw_text(ctx, canvas_xmax/2, canvas_ymax - canvas_plot_margin/2, plot_label_x);
             draw_text_vertical(ctx, canvas_plot_margin/2, canvas_ymax/2, plot_label_y);
