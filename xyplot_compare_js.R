@@ -2,7 +2,10 @@
 # Indiana University Southeast
 # 2016-09-05
 
-setwd("/Users/chris/Documents/R code/xyplot_js")
+setwd("/Users/chris/Documents/R code/xyplot_compare_js")
+
+###################################################################################
+###################################################################################
 
 # helper functions
 
@@ -48,126 +51,81 @@ build_labels <- function(x, y) {
     return(s)
 }
 
-# canvas coords
-draw_rectangle_canvas <- function(filename, x1, y1, x2, y2) {
-    cat(file=filename, "            ctx.strokeStyle = \"black\";\n", append=TRUE)
-    cat(file=filename, "            ctx.moveTo(", x1, ",", y1, ");\n", sep="", append=TRUE)
-    cat(file=filename, "            ctx.lineTo(", x2, ",", y1, ");\n", sep="", append=TRUE)
-    cat(file=filename, "            ctx.lineTo(", x2, ",", y2, ");\n", sep="", append=TRUE)
-    cat(file=filename, "            ctx.lineTo(", x1, ",", y2, ");\n", sep="", append=TRUE)
-    cat(file=filename, "            ctx.lineTo(", x1, ",", y1, ");\n", sep="", append=TRUE)
-    cat(file=filename, "            ctx.stroke();\n", append=TRUE)
-}
-
-# text is placed relative to center coord of text
-draw_text <- function(filename, xcenter, ycenter, txt, px) {
-    cat(file=filename, "            ctx.font = \"", px, "px Arial\";\n", sep="", append=TRUE)
-    cat(file=filename, "            ctx.textAlign = \"center\";\n", append=TRUE)
-    cat(file=filename, "            ctx.fillStyle = \"black\";\n", append=TRUE)
-    cat(file=filename, "            ctx.fillText(\"", txt, "\",", xcenter, ",", ycenter, ");\n", sep="", append=TRUE)
-}
-
-# text is placed relative to center coord of text; text reads upwards
-draw_text_vertical <- function(filename, xcenter, ycenter, txt, px) {
-    cat(file=filename, "            ctx.font = \"", px, "px Arial\";\n", sep="", append=TRUE)
-    cat(file=filename, "            ctx.save();\n", append=TRUE)
-    cat(file=filename, "            ctx.translate(", xcenter, ",", ycenter, ");\n", sep="", append=TRUE);
-    cat(file=filename, "            ctx.rotate(-Math.PI/2);\n", append=TRUE)
-    cat(file=filename, "            ctx.textAlign = \"center\";\n", append=TRUE)
-    cat(file=filename, "            ctx.fillText(\"", txt, "\",0,0);\n", sep="", append=TRUE);
-    cat(file=filename, "            ctx.restore();\n", append=TRUE)
- }
-
 ###################################################################################
 ###################################################################################
 
 # x and y numeric vectors of same length (assumed no NAs etc)
-xyplotjs <- function(filename, x, y,
+xyplot_compare_js <- function(filename, 
+                     x1, y1, x2, y2,
                      canvas.width=500, canvas.height=500,
                      canvas.margin=50,
                      x.label=NULL, y.label=NULL, plot.title=NULL, stylesheet=NULL) {
-    xmin <- min(x)
-    xmax <- max(x)
-    ymin <- min(y)
-    ymax <- max(y)
+    xmin <- min(c(x1,x2))
+    xmax <- max(c(x1,x2))
+    ymin <- min(c(y1,y2))
+    ymax <- max(c(y1,y2))
     
-    scene <- list(xmin = min(x), xmax = max(x), 
-                  ymin = min(y), ymax = max(y))
+    scene <- list(xmin = xmin, xmax = xmax, 
+                  ymin = ymin, ymax = ymax)
     canvas <- list(width = canvas.width, height=canvas.height, 
                    margin = canvas.margin)
     
     # write header and title for html page (file is overwritten without warning)
-    cat(file=filename, "<!doctype html><html>\n", append=FALSE)
-    cat(file=filename, "    <head>\n", append=TRUE)
-    cat(file=filename,"        <title>",plot.title,"</title>\n", sep="", append=TRUE)
-    if (!is.null(stylesheet)) {
-        cat(file=filename, "        <link rel=\"", 
-            stylesheet, "stylesheet\" href=\"styles.css\">\n", append=TRUE)
-    }
-    
-    # write beginning of script
-    cat(file=filename,"        <script>\n", append=TRUE)
-    cat(file=filename,"        <!--\n", append=TRUE)
-    cat(file=filename,"            var previous_state = false;\n", append=TRUE)
-    cat(file=filename,"            var active_point = false;\n", append=TRUE)
-    cat(file=filename,"            var selected_index = 0\n", append=TRUE)
-    cat(file=filename,"            var r = 4;\n", append=TRUE)
+    zz <- readLines("plot_template_part1.html", n=-1)
+    cat(file=filename, zz, append=FALSE, sep="\n")
     
     # write canvas dimensions
     cat(file=filename, "            var canvas_xmin = ", 0, ";\n", sep="", append=TRUE)
     cat(file=filename, "            var canvas_xmax = ", canvas.width, ";\n", sep="", append=TRUE)
     cat(file=filename, "            var canvas_ymin = ", 0, ";\n", sep="", append=TRUE)
     cat(file=filename, "            var canvas_ymax = ", canvas.height, ";\n", sep="", append=TRUE)
+    cat(file=filename, "            var canvas_plot_margin = ", canvas.margin, ";\n", sep="", append=TRUE)
+    
+    # write title and axis labels
+    cat(file=filename, "            var main_title = \"", plot.title, "\";\n", sep="", append=TRUE)
+    cat(file=filename, "            var plot_label_x = \"", x.label, "\";\n", sep="", append=TRUE)
+    cat(file=filename, "            var plot_label_y = \"", y.label, "\";\n", sep="", append=TRUE)
     
     # write point and label arrays
-    n <- length(x)
-    cat(file=filename, "            var npoints = ", n, ";\n", sep="", append=TRUE)
-    write_vector(filename, "x", canvasx(x, scene, canvas))
-    write_vector(filename, "y", canvasy(y, scene, canvas))
-    s <- build_labels(x, y)
-    write_character_vector(filename, "labels", s)
+    n1 <- length(x1)
+    n2 <- length(x2)
+    cat(file=filename, "            var npoints1 = ", n1, ";\n", sep="", append=TRUE)
+    cat(file=filename, "            var npoints2 = ", n2, ";\n", sep="", append=TRUE)
+    write_vector(filename, "x1", canvasx(x1, scene, canvas))
+    write_vector(filename, "y1", canvasy(y1, scene, canvas))
+    write_vector(filename, "x2", canvasx(x2, scene, canvas))
+    write_vector(filename, "y2", canvasy(y2, scene, canvas))
+    s1 <- build_labels(x1, y1)
+    s2 <- build_labels(x2, y2)
+    write_character_vector(filename, "labels1", s1)
+    write_character_vector(filename, "labels2", s2)
     
-    # write init() and first half of draw_stuff() functions
-    zz <- readLines("body_first_half.html", n=-1)
+    # write (most of) the body of the html file
+    zz <- readLines("plot_template_part2.html", n=-1)
     cat(file=filename, zz, append=TRUE, sep="\n")
     
-    # write middle portion of draw_stuff(), for graph labels
-    # write bounding rectangle for graph
-    x1 <- canvas.margin - 4
-    x2 <- canvas.width - canvas.margin + 4
-    y1 <- canvas.margin - 4
-    y2 <- canvas.height - canvas.margin + 4
-    draw_rectangle_canvas( filename, x1, y1, x2, y2)
-
-    # write graph main title, and x and y labels
-    xcenter <- (x1 + x2)/2
-    ycenter <- canvas.margin/2
-    draw_text(filename, xcenter, ycenter, plot.title, 24)
-    xmid <- (x1 + x2)/2
-    ylab <- canvas.height - canvas.margin/2
-    draw_text(filename, xmid, ylab, x.label, 20)
-    xlab <- canvas.margin/2
-    ymid <- (y1 + y2)/2
-    draw_text_vertical(filename, xlab, ymid, y.label, 20)
-
-    # write conclusion of draw_stuff() function, and mouse event function
-    z4 <- readLines("body_second_half.html", n=-1)
-    cat(file=filename, z4, append=TRUE, sep="\n")
-    
     # write canvas declaration and closing tags
-    # cat(file=filename, "        <h2>", main.title, "</h2>\n", sep="", append=TRUE)
     cat(file=filename, "<canvas width=", canvas.width, 
                        " height=", canvas.height, 
                        " id=\"myCanvas\"></canvas>\n", sep="", append=TRUE)
-    cat(file=filename, "    </body>\n", append=TRUE)
-    cat(file=filename, "</html>\n", append=TRUE)
+    
+    # write concluding portion of the html file
+    zz <- readLines("plot_template_part3.html", n=-1)
+    cat(file=filename, zz, append=TRUE, sep="\n")
 }
 
+###################################################################################
+###################################################################################
 
 # test the function
-filename = "faithful_plot.html"
-xyplotjs(filename, faithful$eruptions, faithful$waiting, 
+filename = "test_plot.html"
+set.seed(123)
+x1 = rnorm(1000,1)
+y1 = rnorm(1000,1)
+x2 = rnorm(1000,1) + 2
+y2 = rnorm(1000,1) + 2
+xyplot_compare_js(filename, x1, y1, x2, y2, 
          canvas.width=700, canvas.height=700, stylesheet="style.css",
-         plot.title="Old Faithful", x.label="eruption duration (min)",
-         y.label="waiting time (min)")
+         plot.title="Test Data", x.label="x",
+         y.label="y")
 
