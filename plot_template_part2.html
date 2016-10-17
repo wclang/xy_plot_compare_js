@@ -1,0 +1,185 @@
+        // part 2 of plot template output html file
+        function in_point(x1,y1,r,x,y) {
+            return((x1 - x)*(x1 - x) + (y1 - y)*(y1 - y) < point_radius*point_radius)
+        }
+        
+        function init() {
+            var canvas = document.getElementById("myCanvas");
+            canvas.addEventListener("mousemove", doMouseMove, false);
+            var ctx = canvas.getContext("2d");
+            draw_stuff();
+        }
+        
+        function draw_point(ctx, x, y, r, color) {
+            ctx.beginPath();
+            ctx.arc(x, y, point_radius ,2*Math.PI,false);
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+        
+        function draw_point_array(ctx, x, y, point_radius, selected_index, active_point, color, active_color) {
+            npoints = x.length;
+            for (i=0; i<npoints; i++) {
+                if (active_point & selected_index == i) 
+                    draw_point(ctx, x[i], y[i], point_radius, active_color);
+                else 
+                    draw_point(ctx, x[i], y[i], point_radius, color);
+            }
+        }
+        
+        function clear_rectangle(ctx, x1, y1, x2, y2) {
+            ctx.clearRect(x1, y1, x2 - x1, y2 - y1);
+            ctx.fillStyle = "white";
+            ctx.fillRect(x1, y1, x2 - x1, y2 - y1);;
+        }
+
+        
+        function draw_rectangle(ctx, x1, y1, x2, y2) {
+            ctx.strokeStyle = "black";
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y1);
+            ctx.lineTo(x2, y2);
+            ctx.lineTo(x1, y2);
+            ctx.lineTo(x1, y1);
+            ctx.stroke();
+        }
+        
+        // center of text is at (x,y)
+        function draw_big_text(ctx, x, y, txt) {
+            ctx.font = "24px Arial";
+            ctx.textAlign = "center";
+            ctx.fillStyle = "black";
+            ctx.fillText(txt, x, y);
+        }
+        
+        // center of text is at (x,y)
+        function draw_text(ctx, x, y, txt) {
+            ctx.font = "20px Arial";
+            ctx.textAlign = "center";
+            ctx.fillStyle = "black";
+            ctx.fillText(txt, x, y);
+        }
+        
+        function draw_text_vertical(ctx, x, y, txt) {    
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(-Math.PI/2);
+            ctx.textAlign = "center";
+            ctx.fillText("y",0,0);
+            ctx.restore();
+        }
+        
+        // popup label drawn to left or right of point depending on whether close to left
+        // or right edge of plot
+        function draw_popup_label(ctx, ptx, pty, canvas_xmax, canvas_ymax, label_txt, label_color) {
+            var height = 25;
+            var voffset = 10;
+            var hoffset = 15;
+            var vtoffset = 17;
+            var hpadding = 5;
+            ctx.font = "16px Arial";
+            ctx.textAlign = "left";
+            var width = ctx.measureText(label_txt).width + 2*hpadding;
+            var rectx = ptx + hoffset;
+            var recty = pty - voffset;
+            if (rectx + width > canvas_xmax) 
+                rectx = ptx + hoffset - width - 2*hoffset;
+            if (recty - height < 0)
+                recty = pty + voffset;
+            ctx.fillStyle = label_color;
+            ctx.fillRect(rectx, recty, width, height);
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "black";
+            ctx.fillText(label_txt, rectx + hpadding, recty + vtoffset);
+        }
+
+        function draw_stuff() {
+            draw1 = document.getElementById('dataset1').checked;
+            draw2 = document.getElementById('dataset2').checked;
+            draw12 = document.getElementById('dataset12').checked;
+            draw21 = document.getElementById('dataset21').checked;
+            var canvas = document.getElementById("myCanvas");
+            var ctx = canvas.getContext("2d");
+            clear_rectangle(ctx, canvas_xmin, canvas_ymin, canvas_xmax, canvas_ymax);
+            draw_rectangle(ctx, canvas_plot_margin - point_radius, canvas_plot_margin - point_radius, 
+                            canvas_xmax - canvas_plot_margin + point_radius, 
+                            canvas_xmax - canvas_plot_margin + point_radius);
+            draw_big_text(ctx, canvas_xmax/2, canvas_plot_margin/2, main_title);
+            draw_text(ctx, canvas_xmax/2, canvas_ymax - canvas_plot_margin/2, plot_label_x);
+            draw_text_vertical(ctx, canvas_plot_margin/2, canvas_ymax/2, plot_label_y);
+            // draw points
+            console.log(draw1, draw2, draw12);
+            
+            if (draw1) {
+                draw_point_array(ctx, x1, y1, point_radius, selected_index1, active_point1, "#000000", "#FF0000");
+                if (active_point1) 
+                    draw_popup_label(ctx, x1[selected_index1], y1[selected_index1], canvas_xmax, canvas_ymax, 
+                        labels1[selected_index1], "#DDDDDD")
+            }  
+            
+            if (draw2) {
+                draw_point_array(ctx, x2, y2, point_radius, selected_index2, active_point2, "#0000FF", "#FF0000");
+                if (active_point2) 
+                    draw_popup_label(ctx, x2[selected_index2], y2[selected_index2], canvas_xmax, canvas_ymax, 
+                        labels2[selected_index2], "#DDDDFF")
+            }  
+
+            if (draw21) {
+                draw_point_array(ctx, x1, y1, point_radius, selected_index1, active_point1, "#000000", "#FF0000");
+                draw_point_array(ctx, x2, y2, point_radius, selected_index2, active_point2, "#0000FF", "#FF0000");
+                if (active_point1) 
+                    draw_popup_label(ctx, x1[selected_index1], y1[selected_index1], canvas_xmax, canvas_ymax, 
+                        labels1[selected_index1], "#DDDDDD")
+                if (active_point2) 
+                    draw_popup_label(ctx, x2[selected_index2], y2[selected_index2], canvas_xmax, canvas_ymax, 
+                        labels2[selected_index2], "#DDDDFF")
+            } 
+            
+            if (draw12) {
+                draw_point_array(ctx, x2, y2, point_radius, selected_index2, active_point2, "#0000FF", "#FF0000");
+                draw_point_array(ctx, x1, y1, point_radius, selected_index1, active_point1, "#000000", "#FF0000");
+                if (active_point2) 
+                    draw_popup_label(ctx, x2[selected_index2], y2[selected_index2], canvas_xmax, canvas_ymax, 
+                        labels2[selected_index2], "#DDDDFF")
+                if (active_point1) 
+                    draw_popup_label(ctx, x1[selected_index1], y1[selected_index1], canvas_xmax, canvas_ymax, 
+                        labels1[selected_index1], "#DDDDDD")
+            } 
+        } // end draw_stuff
+        
+        function doMouseMove(event) {
+            var canvas = document.getElementById("myCanvas");
+            //console.log(event.clientX-canvas.offsetLeft);
+            //console.log(event.clientY-canvas.offsetTop);
+            mousex = event.clientX - canvas.offsetLeft + window.scrollX;
+            mousey = event.clientY - canvas.offsetTop + window.scrollY;
+            active_point1 = false;
+            active_point2 = false;
+            for (i=0; i<npoints1; i++) {
+                if (in_point(x1[i], y1[i], point_radius, mousex, mousey)) {
+                    active_point1 = true;
+                    selected_index1 = i;
+                }
+            }
+            for (i=0; i<npoints2; i++) {
+                if (in_point(x2[i], y2[i], point_radius, mousex, mousey)) {
+                    active_point2 = true;
+                    selected_index2 = i;
+                }
+            } 
+            
+            // do not re-draw everything if mouse does not enter or leave a point
+            if (active_point1 || active_point2) {
+                previous_draw_state = true;
+                draw_stuff();
+            } else if (previous_draw_state) {
+                previous_draw_state = false;
+                draw_stuff();
+            }
+            
+        }
+        
+        -->
+        </script>
+    </head>
+    <body onLoad=init()>
